@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the shift management app",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "The uppercase username of the user"
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the user was created"
+        }
+      },
+      "required": ["username", "createdAt"]
+    },
+    "ShiftEntry": {
+      "title": "ShiftEntry",
+      "description": "A user's entry for a specific shift",
+      "type": "object",
+      "properties": {
+        "weekId": {
+          "type": "string",
+          "description": "The ISO week string, e.g., '2026-16'"
+        },
+        "dayIndex": {
+          "type": "number",
+          "description": "The day of the week (0 = Monday, 6 = Sunday)"
+        },
+        "period": {
+          "type": "string",
+          "description": "The period of the day: 'morning', 'afternoon', 'evening'",
+          "enum": ["morning", "afternoon", "evening"]
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the person taking the shift"
+        },
+        "upvotes": {
+          "type": "number",
+          "description": "Number of upvotes"
+        },
+        "downvotes": {
+          "type": "number",
+          "description": "Number of downvotes"
+        },
+        "votes": {
+          "type": "map",
+          "description": "Map of voter usernames to their vote ('up' or 'down')"
+        }
+      },
+      "required": ["weekId", "dayIndex", "period", "username", "upvotes", "downvotes", "votes"]
+    }
+  },
+  "firestore": {
+    "/users/{username}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores user profiles, keyed by uppercase username"
+    },
+    "/shifts/{shiftId}": {
+      "schema": {
+        "$ref": "#/entities/ShiftEntry"
+      },
+      "description": "Stores shift entries"
+    }
+  }
+}

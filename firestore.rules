@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isValidUser(data) {
+      return data.keys().hasOnly(['username', 'createdAt']) &&
+             data.username is string && data.username.size() > 0 && data.username.size() < 50 &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidShiftEntry(data) {
+      return data.keys().hasOnly(['weekId', 'dayIndex', 'period', 'username', 'upvotes', 'downvotes', 'votes']) &&
+             data.weekId is string && data.weekId.size() > 0 && data.weekId.size() < 20 &&
+             data.dayIndex is number && data.dayIndex >= 0 && data.dayIndex <= 6 &&
+             data.period in ['morning', 'afternoon', 'evening'] &&
+             data.username is string && data.username.size() > 0 && data.username.size() < 50 &&
+             data.upvotes is number && data.upvotes >= 0 &&
+             data.downvotes is number && data.downvotes >= 0 &&
+             data.votes is map;
+    }
+
+    match /users/{username} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    isValidUser(request.resource.data) && 
+                    request.resource.data.username == username;
+      allow update: if false; // Users shouldn't be updated
+      allow delete: if false;
+    }
+
+    match /shifts/{shiftId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    isValidShiftEntry(request.resource.data);
+      allow update: if isAuthenticated() && 
+                    isValidShiftEntry(request.resource.data);
+      allow delete: if isAuthenticated(); // We'll rely on client side to only delete own shifts, but ideally we'd check if the user deleting is the owner.
+      // To check if the user deleting is the owner, we'd need to know their username.
+      // Since we don't have custom claims, we can't easily verify their username in rules.
+      // For this prototype, we'll allow authenticated users to delete.
+    }
+  }
+}
